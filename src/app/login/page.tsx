@@ -2,7 +2,7 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, configError } from "@/lib/supabase/client";
 
 export default function LoginPage() {
   return (
@@ -18,6 +18,7 @@ function LoginForm() {
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(errorFromQuery(params.get("error")));
+  const misconfigured = configError();
 
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
@@ -41,6 +42,22 @@ function LoginForm() {
       return;
     }
     setSent(true);
+  }
+
+  if (misconfigured) {
+    return (
+      <main className="flex min-h-dvh flex-col justify-center gap-4">
+        <h1 className="text-2xl font-bold">AISA Tracker</h1>
+        <div className="rounded-xl border border-[var(--color-bad)] bg-red-50 p-4">
+          <p className="font-semibold text-[var(--color-bad)]">ตั้งค่าไม่ครบ</p>
+          <p className="mt-1 text-sm">{misconfigured}</p>
+          <p className="mt-3 text-xs text-[var(--color-muted)]">
+            ค่าที่ขึ้นต้นด้วย NEXT_PUBLIC_ ถูกฝังตอน build ไม่ใช่ตอนรัน
+            แก้บน Vercel แล้วต้องกด Redeploy ด้วย ไม่งั้นของเก่ายังค้างอยู่
+          </p>
+        </div>
+      </main>
+    );
   }
 
   return (

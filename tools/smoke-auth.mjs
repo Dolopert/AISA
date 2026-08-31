@@ -33,6 +33,26 @@ function report(name, ok, detail) {
   if (!ok) failed++;
 }
 
+// 0 — bundle ที่ deploy อยู่ต้องไม่มีค่า placeholder ค้าง
+{
+  const html = await fetch(`${BASE}/login`).then((r) => r.text());
+  const chunks = [...new Set(html.match(/\/_next\/static\/chunks\/[^"']+\.js/g) ?? [])];
+  let embedded = null;
+  for (const c of chunks) {
+    const js = await fetch(`${BASE}${c}`).then((r) => r.text());
+    const m = js.match(/https:\/\/[a-z0-9]+\.supabase\.co/);
+    if (m) {
+      embedded = m[0];
+      break;
+    }
+  }
+  report(
+    "bundle บน production ไม่มีค่า placeholder",
+    embedded !== null && !embedded.includes("placeholder"),
+    embedded ? `ฝังอยู่: ${embedded}` : "หา URL ใน bundle ไม่เจอ",
+  );
+}
+
 // 1 — view ต้องไม่คืนข้อมูลให้คนที่ไม่ได้ล็อกอิน
 for (const view of ["subject_accuracy", "los_mastery"]) {
   const { data, error } = await anon.from(view).select("*").limit(5);
