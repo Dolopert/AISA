@@ -18,13 +18,17 @@ export default async function PracticePage({
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [subjects, { data: setRows }] = await Promise.all([
+  const [subjects, { data: setRows }, { count: bankSize }] = await Promise.all([
     getSubjects(),
     supabase
       .from("question_sets")
       .select("id, name, kind, questions(count)")
       .neq("kind", "external")
       .order("created_at", { ascending: false }),
+    supabase
+      .from("questions")
+      .select("id", { count: "exact", head: true })
+      .eq("selectable", true),
   ]);
 
   const sets: SetOption[] = (setRows ?? [])
@@ -44,6 +48,7 @@ export default async function PracticePage({
       <h1 className="text-xl font-bold">ทำข้อสอบ</h1>
 
       <StartSession
+        bankSize={bankSize ?? 0}
         sets={sets}
         subjects={subjects.map((s) => ({ code: s.code, shortName: s.short_name }))}
         initialSubject={subject}

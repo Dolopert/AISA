@@ -59,6 +59,11 @@ function LoginForm() {
             เปิดเมลของ <strong>{email}</strong> แล้วกดลิงก์เพื่อเข้าระบบ
             ลิงก์ใช้ได้ครั้งเดียวและหมดอายุใน 1 ชั่วโมง
           </p>
+          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-[var(--color-warn)]">
+            <strong>ต้องเปิดลิงก์บนเครื่องและเบราว์เซอร์เดียวกับที่ขอ</strong> —
+            ถ้าขอจากคอมแล้วไปกดในเมลบน iPad จะเข้าไม่ได้
+            และถ้ากดจากในแอป Gmail ให้กดค้างที่ลิงก์แล้วเลือกเปิดใน Safari
+          </p>
           <button
             onClick={() => setSent(false)}
             className="mt-3 text-sm text-[var(--color-brand)] underline"

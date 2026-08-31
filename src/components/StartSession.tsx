@@ -7,10 +7,12 @@ export type SetOption = { id: string; name: string; count: number; kind: string 
 export type SubjectOption = { code: string; shortName: string };
 
 export default function StartSession({
+  bankSize,
   sets,
   subjects,
   initialSubject,
 }: {
+  bankSize: number;
   sets: SetOption[];
   subjects: SubjectOption[];
   initialSubject?: string;
@@ -39,6 +41,9 @@ export default function StartSession({
     }
     router.push(`/session/${data.id}`);
   }
+
+  // คลังโจทย์ไม่ได้อยู่ใน repo นี้ ต้องนำเข้าจากเครื่องเจ้าของระบบก่อน
+  if (bankSize === 0) return <ComingSoon />;
 
   return (
     <div className="space-y-4">
@@ -150,6 +155,26 @@ export default function StartSession({
         </div>
       </Card>
     </div>
+  );
+}
+
+function ComingSoon() {
+  return (
+    <section className="rounded-xl border border-dashed border-[var(--color-line)] bg-[var(--color-card)] p-5">
+      <p className="text-xs font-semibold uppercase tracking-wide text-[var(--color-brand)]">
+        Coming Soon
+      </p>
+      <h2 className="mt-1 font-semibold">คลังข้อสอบยังไม่เปิด</h2>
+      <p className="mt-2 text-sm text-[var(--color-muted)]">
+        ตัวจับเวลาและระบบติดตามพร้อมใช้งานแล้ว แต่ยังไม่มีโจทย์ในคลัง
+        เนื้อหาข้อสอบเป็นลิขสิทธิ์ของตลาดหลักทรัพย์ฯ จึงไม่ได้รวมอยู่ในโค้ดชุดนี้
+        และต้องนำเข้าแยกโดยเจ้าของระบบ
+      </p>
+      <p className="mt-3 text-sm text-[var(--color-muted)]">
+        ระหว่างนี้ใช้ <strong>บันทึกผลจากภายนอก</strong> ด้านล่างได้เลย —
+        ไปทำ Practice Exam ทางการของ ตลท. แล้วเอาผลกลับมาลง สถิติรายวิชาเดินได้ตามปกติ
+      </p>
+    </section>
   );
 }
 

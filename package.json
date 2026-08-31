@@ -8,7 +8,9 @@
     "start": "next start -p 3210",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "seed": "node tools/seed.mjs"
+    "seed": "node tools/seed.mjs",
+    "check:content": "node tools/check-no-content.mjs",
+    "check": "npm run typecheck && node tools/check-budget.mjs && node tools/check-no-content.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.5.2",
