@@ -96,7 +96,7 @@ export default function ReadingTimer({ chapterId }: { chapterId: number }) {
     <div className="mt-2 flex flex-wrap items-center gap-2">
       {running ? (
         <>
-          <span className="tabular rounded bg-[var(--color-brand)] px-2 py-1 text-xs font-semibold text-white">
+          <span className="tabular rounded bg-[var(--color-brand)] px-2 py-1 text-xs font-semibold text-[var(--color-on-brand)]">
             {fmt(elapsed)}
           </span>
           <button
@@ -131,7 +131,7 @@ export default function ReadingTimer({ chapterId }: { chapterId: number }) {
           <button
             onClick={saveManual}
             disabled={saving}
-            className="rounded bg-[var(--color-brand)] px-2 py-1 text-xs text-white"
+            className="rounded bg-[var(--color-brand)] px-2 py-1 text-xs text-[var(--color-on-brand)]"
           >
             บันทึก
           </button>

@@ -66,7 +66,7 @@ export default async function Dashboard() {
           {summary.chaptersDone}/{summary.chaptersTotal} บท · เหลือ{" "}
           {formatMinutes(summary.estimateMinutesRemaining)}
         </p>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-track)]">
           <div
             className="h-full rounded-full bg-[var(--color-brand)]"
             style={{ width: `${Math.round(summary.coverage * 100)}%` }}
@@ -107,7 +107,7 @@ export default async function Dashboard() {
         </section>
       )}
 
-      <section className="rounded-xl border border-[var(--color-warn)]/30 bg-amber-50 p-4">
+      <section className="rounded-xl border border-[var(--color-warn-line)] bg-[var(--color-warn-bg)] p-4">
         <h2 className="text-sm font-semibold text-[var(--color-warn)]">{REVISION_NOTICE.label}</h2>
         <p className="mt-1 text-xs">
           มีผลกับ{REVISION_NOTICE.effective} — ครอบคลุมรอบสอบของคุณ

@@ -30,7 +30,7 @@ export default async function TopicsPage() {
           </p>
           <Link
             href="/practice"
-            className="mt-4 inline-block rounded-lg bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white"
+            className="mt-4 inline-block rounded-lg bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-[var(--color-on-brand)]"
           >
             ไปทำโจทย์
           </Link>
@@ -58,7 +58,7 @@ export default async function TopicsPage() {
                 <strong className="tabular">{w.number}</strong> {w.text}
               </p>
               {w.revised2569 && (
-                <p className="mt-2 rounded bg-amber-100 p-2 text-xs text-[var(--color-warn)]">
+                <p className="mt-2 rounded bg-[var(--color-warn-bg-strong)] p-2 text-xs text-[var(--color-warn)]">
                   บทนี้อยู่ใน {REVISION_NOTICE.label} — อ่านจากฉบับปรับปรุง ไม่ใช่ตำราเดิม
                 </p>
               )}

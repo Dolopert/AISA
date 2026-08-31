@@ -48,7 +48,7 @@ function LoginForm() {
     return (
       <main className="flex min-h-dvh flex-col justify-center gap-4">
         <h1 className="text-2xl font-bold">AISA Tracker</h1>
-        <div className="rounded-xl border border-[var(--color-bad)] bg-red-50 p-4">
+        <div className="rounded-xl border border-[var(--color-bad)] bg-[var(--color-bad-bg)] p-4">
           <p className="font-semibold text-[var(--color-bad)]">ตั้งค่าไม่ครบ</p>
           <p className="mt-1 text-sm">{misconfigured}</p>
           <p className="mt-3 text-xs text-[var(--color-muted)]">
@@ -76,7 +76,7 @@ function LoginForm() {
             เปิดเมลของ <strong>{email}</strong> แล้วกดลิงก์เพื่อเข้าระบบ
             ลิงก์ใช้ได้ครั้งเดียวและหมดอายุใน 1 ชั่วโมง
           </p>
-          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-xs text-[var(--color-warn)]">
+          <p className="mt-3 rounded-lg bg-[var(--color-warn-bg)] p-3 text-xs text-[var(--color-warn)]">
             <strong>ต้องเปิดลิงก์บนเครื่องและเบราว์เซอร์เดียวกับที่ขอ</strong> —
             ถ้าขอจากคอมแล้วไปกดในเมลบน iPad จะเข้าไม่ได้
             และถ้ากดจากในแอป Gmail ให้กดค้างที่ลิงก์แล้วเลือกเปิดใน Safari
@@ -100,20 +100,20 @@ function LoginForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-4 text-base"
+              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-4 text-base"
             />
           </label>
           <button
             type="submit"
             disabled={busy}
-            className="w-full rounded-xl bg-[var(--color-brand)] px-4 py-4 text-base font-semibold text-white disabled:opacity-50"
+            className="w-full rounded-xl bg-[var(--color-brand)] px-4 py-4 text-base font-semibold text-[var(--color-on-brand)] disabled:opacity-50"
           >
             {busy ? "กำลังส่งลิงก์…" : "ส่งลิงก์เข้าระบบ"}
           </button>
         </form>
       )}
 
-      {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-[var(--color-bad)]">{error}</p>}
+      {error && <p className="rounded-lg bg-[var(--color-bad-bg)] p-3 text-sm text-[var(--color-bad)]">{error}</p>}
 
       <p className="text-xs text-[var(--color-muted)]">
         ระบบนี้เป็นวงปิด เข้าได้เฉพาะอีเมลที่อยู่ในรายชื่อที่อนุญาตไว้ล่วงหน้า ไม่มีการสมัครเอง

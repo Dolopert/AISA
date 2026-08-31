@@ -2,20 +2,103 @@
 
 @theme {
   --font-sans: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+}
 
-  --color-ink: #12151c;
+/*
+ * ธีม — ประกาศเป็นตัวแปรล้วน ไม่ผูกกับ utility ของ Tailwind
+ * เพราะต้องสลับได้ตอนรัน ไม่ใช่ตอน build
+ *
+ * ค่าเริ่มต้นคือโหมดสว่าง แล้วทับด้วย prefers-color-scheme สำหรับคนที่ตั้งเครื่องเป็นมืด
+ * และทับอีกชั้นด้วย [data-theme] สำหรับคนที่กดเลือกเอง
+ */
+:root {
   --color-paper: #f7f8fa;
   --color-card: #ffffff;
+  --color-input: #ffffff;
   --color-line: #e3e6ec;
+  --color-ink: #12151c;
   --color-muted: #6b7280;
+
   --color-brand: #1f5f8b;
+  --color-brand-line: #a8c4d8;
+  --color-on-brand: #ffffff;
+
   --color-good: #0f7b52;
+  --color-good-bg: #ecfdf5;
   --color-warn: #b45309;
+  --color-warn-bg: #fffbeb;
+  --color-warn-bg-strong: #fef3c7;
+  --color-warn-line: #e7c99a;
   --color-bad: #b3261e;
+  --color-bad-bg: #fef2f2;
+  --color-bad-line: #e5b4b0;
+
+  --color-track: #eef1f5;
+  --color-track-strong: #cbd5e1;
+  --color-track-ink: #475569;
+}
+
+/* ดำน้ำเงิน — คุมโทนให้เรียบ ไม่มีสีจัดนอกจากตัวที่ต้องเตือนจริง ๆ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-paper: #080c14;
+    --color-card: #101725;
+    --color-input: #0c121d;
+    --color-line: #1d2637;
+    --color-ink: #e8ecf4;
+    --color-muted: #8a94a8;
+
+    --color-brand: #5b9bd8;
+    --color-brand-line: #2f4c6b;
+    --color-on-brand: #06101c;
+
+    --color-good: #45c08a;
+    --color-good-bg: #0f2a20;
+    --color-warn: #e3a944;
+    --color-warn-bg: #2a2113;
+    --color-warn-bg-strong: #382b16;
+    --color-warn-line: #5c4a24;
+    --color-bad: #ef6f66;
+    --color-bad-bg: #2c1614;
+    --color-bad-line: #5e2f2b;
+
+    --color-track: #18202e;
+    --color-track-strong: #33415a;
+    --color-track-ink: #b3bccd;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-paper: #080c14;
+  --color-card: #101725;
+  --color-input: #0c121d;
+  --color-line: #1d2637;
+  --color-ink: #e8ecf4;
+  --color-muted: #8a94a8;
+
+  --color-brand: #5b9bd8;
+  --color-brand-line: #2f4c6b;
+  --color-on-brand: #06101c;
+
+  --color-good: #45c08a;
+  --color-good-bg: #0f2a20;
+  --color-warn: #e3a944;
+  --color-warn-bg: #2a2113;
+  --color-warn-bg-strong: #382b16;
+  --color-warn-line: #5c4a24;
+  --color-bad: #ef6f66;
+  --color-bad-bg: #2c1614;
+  --color-bad-line: #5e2f2b;
+
+  --color-track: #18202e;
+  --color-track-strong: #33415a;
+  --color-track-ink: #b3bccd;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  color-scheme: light dark;
+  background: var(--color-paper);
 }
 
 body {
@@ -34,4 +117,27 @@ body {
 
 .tabular {
   font-variant-numeric: tabular-nums;
+}
+
+/* ช่องกรอกต้องอ่านออกในโหมดมืด ค่าเริ่มต้นของเบราว์เซอร์เป็นพื้นขาวเสมอ */
+input,
+select,
+textarea {
+  background: var(--color-input);
+  color: var(--color-ink);
+}
+
+input::placeholder {
+  color: var(--color-muted);
+}
+
+/* ตัวเลือกวันที่และตัวเลขของ Safari/Chrome ใช้ไอคอนสีเข้มซึ่งจมหายในพื้นมืด */
+:root[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) opacity(0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) opacity(0.6);
+  }
 }

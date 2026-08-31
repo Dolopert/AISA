@@ -65,13 +65,13 @@ export default function ExternalForm({
 
   return (
     <div className="space-y-4">
-      {error && <p className="rounded-lg bg-red-50 p-3 text-sm text-[var(--color-bad)]">{error}</p>}
+      {error && <p className="rounded-lg bg-[var(--color-bad-bg)] p-3 text-sm text-[var(--color-bad)]">{error}</p>}
 
       <section className="space-y-2 rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-4">
         <select
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          className="w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm"
+          className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm"
         >
           <option value="">เลือกวิชา</option>
           {subjects.map((s) => (
@@ -88,7 +88,7 @@ export default function ExternalForm({
             max={200}
             value={count}
             onChange={(e) => setCount(Math.max(1, Number(e.target.value)))}
-            className="w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
             placeholder="จำนวนข้อ"
           />
           <input
@@ -97,7 +97,7 @@ export default function ExternalForm({
             min={1}
             value={minutes}
             onChange={(e) => setMinutes(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
             placeholder="เวลารวม (นาที)"
           />
         </div>
@@ -117,8 +117,8 @@ export default function ExternalForm({
               onClick={() => toggle(n)}
               className={`aspect-square rounded text-xs tabular ${
                 wrong.has(n)
-                  ? "bg-[var(--color-bad)] text-white"
-                  : "bg-slate-100 text-slate-500"
+                  ? "bg-[var(--color-bad)] text-[var(--color-on-brand)]"
+                  : "bg-[var(--color-track)] text-[var(--color-muted)]"
               }`}
             >
               {n}
@@ -130,7 +130,7 @@ export default function ExternalForm({
       <button
         onClick={save}
         disabled={busy}
-        className="w-full rounded-lg bg-[var(--color-brand)] py-4 text-sm font-semibold text-white disabled:opacity-50"
+        className="w-full rounded-lg bg-[var(--color-brand)] py-4 text-sm font-semibold text-[var(--color-on-brand)] disabled:opacity-50"
       >
         {busy ? "กำลังบันทึก…" : "บันทึกผล"}
       </button>

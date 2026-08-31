@@ -48,7 +48,7 @@ export default function StartSession({
   return (
     <div className="space-y-4">
       {error && (
-        <p className="rounded-lg bg-red-50 p-3 text-sm text-[var(--color-bad)]">{error}</p>
+        <p className="rounded-lg bg-[var(--color-bad-bg)] p-3 text-sm text-[var(--color-bad)]">{error}</p>
       )}
 
       <Card
@@ -63,8 +63,8 @@ export default function StartSession({
               onClick={() => setCount(n)}
               className={`rounded-lg border px-4 py-2 text-sm tabular ${
                 count === n
-                  ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white"
-                  : "border-[var(--color-line)] bg-white"
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                  : "border-[var(--color-line)] bg-[var(--color-input)]"
               }`}
             >
               {n} ข้อ
@@ -74,7 +74,7 @@ export default function StartSession({
         <button
           onClick={() => start({ mode: "adaptive", count })}
           disabled={busy}
-          className="mt-3 w-full rounded-lg bg-[var(--color-brand)] py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="mt-3 w-full rounded-lg bg-[var(--color-brand)] py-3 text-sm font-semibold text-[var(--color-on-brand)] disabled:opacity-50"
         >
           เริ่มซ้อม {count} ข้อ
         </button>
@@ -108,7 +108,7 @@ export default function StartSession({
           <select
             value={subject}
             onChange={(e) => setSubject(e.target.value)}
-            className="w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm"
           >
             <option value="">ทุกวิชา</option>
             {subjects.map((s) => (
@@ -125,7 +125,7 @@ export default function StartSession({
               max={180}
               value={count}
               onChange={(e) => setCount(Number(e.target.value))}
-              className="w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+              className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
               placeholder="จำนวนข้อ"
             />
             <input
@@ -134,7 +134,7 @@ export default function StartSession({
               min={1}
               value={minutes}
               onChange={(e) => setMinutes(e.target.value)}
-              className="w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+              className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
               placeholder="นาที (ว่าง = ตามงบ)"
             />
           </div>
@@ -148,7 +148,7 @@ export default function StartSession({
               })
             }
             disabled={busy}
-            className="w-full rounded-lg border border-[var(--color-line)] bg-white py-3 text-sm font-semibold disabled:opacity-50"
+            className="w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] py-3 text-sm font-semibold disabled:opacity-50"
           >
             เริ่มชุดที่ตั้งเอง
           </button>
@@ -193,7 +193,7 @@ function Card({
     <section
       className={`rounded-xl border p-4 ${
         highlight
-          ? "border-[var(--color-brand)]/40 bg-[var(--color-card)]"
+          ? "border-[var(--color-brand-line)] bg-[var(--color-card)]"
           : "border-[var(--color-line)] bg-[var(--color-card)]"
       }`}
     >

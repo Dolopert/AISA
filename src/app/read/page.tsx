@@ -53,7 +53,7 @@ export default async function ReadPage() {
           {formatMinutes(summary.estimateMinutesRemaining)}
         </p>
 
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-[var(--color-track)]">
           <div
             className="h-full rounded-full bg-[var(--color-brand)]"
             style={{ width: `${Math.round(summary.coverage * 100)}%` }}
@@ -73,7 +73,7 @@ export default async function ReadPage() {
       </section>
 
       {pace !== null && pace > 1.15 && (
-        <p className="rounded-xl bg-amber-50 p-4 text-sm text-[var(--color-warn)]">
+        <p className="rounded-xl bg-[var(--color-warn-bg)] p-4 text-sm text-[var(--color-warn)]">
           บทที่อ่านจบไปแล้วใช้เวลาจริงมากกว่าที่ประมาณไว้ราว{" "}
           <strong className="tabular">{Math.round((pace - 1) * 100)}%</strong> —
           ถ้ายังเป็นแบบนี้ เวลาที่เหลือจริงจะมากกว่า{" "}
@@ -100,7 +100,7 @@ function Stat({
     <div
       className={`rounded-xl border p-3 text-center ${
         highlight
-          ? "border-[var(--color-good)] bg-green-50"
+          ? "border-[var(--color-good)] bg-[var(--color-good-bg)]"
           : "border-[var(--color-line)] bg-[var(--color-card)]"
       }`}
     >

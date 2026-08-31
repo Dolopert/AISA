@@ -55,8 +55,8 @@ export default function SettingsForm({
               onClick={() => setDate(r.date)}
               className={`rounded-lg border px-3 py-2 text-xs ${
                 date === r.date
-                  ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white"
-                  : "border-[var(--color-line)] bg-white"
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                  : "border-[var(--color-line)] bg-[var(--color-input)]"
               }`}
             >
               {r.label}
@@ -70,7 +70,7 @@ export default function SettingsForm({
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+            className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
           />
         </label>
 
@@ -84,7 +84,7 @@ export default function SettingsForm({
               max={100}
               value={overall}
               onChange={(e) => setOverall(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
             />
           </label>
           <label className="flex-1">
@@ -96,7 +96,7 @@ export default function SettingsForm({
               max={100}
               value={group1}
               onChange={(e) => setGroup1(Number(e.target.value))}
-              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-white px-3 py-3 text-sm tabular"
+              className="mt-1 w-full rounded-lg border border-[var(--color-line)] bg-[var(--color-input)] px-3 py-3 text-sm tabular"
             />
           </label>
         </div>
@@ -108,7 +108,7 @@ export default function SettingsForm({
         <button
           onClick={save}
           disabled={busy}
-          className="w-full rounded-lg bg-[var(--color-brand)] py-3 text-sm font-semibold text-white disabled:opacity-50"
+          className="w-full rounded-lg bg-[var(--color-brand)] py-3 text-sm font-semibold text-[var(--color-on-brand)] disabled:opacity-50"
         >
           {busy ? "กำลังบันทึก…" : saved ? "บันทึกแล้ว" : "บันทึก"}
         </button>

@@ -48,7 +48,7 @@ export default function ReadingPlan({
                   {done.length}/{s.chapters.length} บท · {formatMinutes(total)}
                 </span>
               </div>
-              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+              <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[var(--color-track)]">
                 <div
                   className="h-full rounded-full bg-[var(--color-brand)] transition-all"
                   style={{ width: `${pct}%` }}
@@ -112,8 +112,8 @@ function ChapterRow({
           aria-label={status === "done" ? "ยกเลิกการติ๊ก" : "ติ๊กว่าอ่านจบแล้ว"}
           className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border text-sm ${
             status === "done"
-              ? "border-[var(--color-good)] bg-[var(--color-good)] text-white"
-              : "border-[var(--color-line)] bg-white"
+              ? "border-[var(--color-good)] bg-[var(--color-good)] text-[var(--color-on-brand)]"
+              : "border-[var(--color-line)] bg-[var(--color-input)]"
           }`}
         >
           {status === "done" ? "✓" : ""}
@@ -140,7 +140,7 @@ function ChapterRow({
           </div>
 
           {chapter.revised2569 && (
-            <p className="mt-1.5 rounded bg-amber-50 px-2 py-1 text-xs text-[var(--color-warn)]">
+            <p className="mt-1.5 rounded bg-[var(--color-warn-bg)] px-2 py-1 text-xs text-[var(--color-warn)]">
               บทนี้ถูกแก้ในเอกสารปรับปรุง 1/2569 — อ่านจากฉบับปรับปรุง ไม่ใช่ตำราเดิม
             </p>
           )}

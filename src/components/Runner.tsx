@@ -113,7 +113,7 @@ export default function Runner({ sessionId, mode, label, timeLimitSec, questions
       </header>
 
       {expired && mode !== "exam" && (
-        <p className="rounded-lg bg-amber-50 p-3 text-sm text-[var(--color-warn)]">
+        <p className="rounded-lg bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]">
           เกินเวลาที่ตั้งไว้แล้ว ทำต่อได้ แต่ข้อที่เหลือจะถูกบันทึกว่าเกินงบเวลา
         </p>
       )}
@@ -158,8 +158,8 @@ export default function Runner({ sessionId, mode, label, timeLimitSec, questions
               onClick={() => choose(n)}
               className={`answer-key rounded-xl border text-2xl font-bold transition ${
                 picked
-                  ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-white"
-                  : "border-[var(--color-line)] bg-[var(--color-card)] active:bg-slate-100"
+                  ? "border-[var(--color-brand)] bg-[var(--color-brand)] text-[var(--color-on-brand)]"
+                  : "border-[var(--color-line)] bg-[var(--color-card)] active:bg-[var(--color-track)]"
               }`}
             >
               {n}
@@ -191,7 +191,7 @@ export default function Runner({ sessionId, mode, label, timeLimitSec, questions
         <button
           onClick={() => finish(false)}
           disabled={submitting}
-          className="flex-1 rounded-lg bg-[var(--color-brand)] py-4 text-base font-semibold text-white disabled:opacity-50"
+          className="flex-1 rounded-lg bg-[var(--color-brand)] py-4 text-base font-semibold text-[var(--color-on-brand)] disabled:opacity-50"
         >
           ส่งคำตอบ
         </button>
@@ -266,10 +266,10 @@ function Grid({
             onClick={() => onPick(i)}
             className={`aspect-square rounded text-[10px] tabular ${
               i === index
-                ? "bg-[var(--color-brand)] text-white"
+                ? "bg-[var(--color-brand)] text-[var(--color-on-brand)]"
                 : done
-                  ? "bg-slate-300 text-slate-700"
-                  : "bg-slate-100 text-slate-400"
+                  ? "bg-[var(--color-track-strong)] text-[var(--color-track-ink)]"
+                  : "bg-[var(--color-track)] text-[var(--color-muted)]"
             }`}
           >
             {q.ordinal}

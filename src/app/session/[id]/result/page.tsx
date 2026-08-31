@@ -60,7 +60,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
         </p>
 
         {slowButRight > 0 && (
-          <p className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-[var(--color-warn)]">
+          <p className="mt-3 rounded-lg bg-[var(--color-warn-bg)] p-3 text-sm text-[var(--color-warn)]">
             มี {slowButRight} ข้อที่ <strong>ตอบถูกแต่ช้ากว่างบเวลา</strong> —
             ในสนามจริงข้อแบบนี้จะไปกินเวลาของข้ออื่น อันตรายพอ ๆ กับตอบผิด
           </p>
@@ -81,7 +81,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
               className={`rounded-xl border p-4 ${
                 r.is_correct
                   ? "border-[var(--color-line)] bg-[var(--color-card)]"
-                  : "border-[var(--color-bad)]/30 bg-red-50"
+                  : "border-[var(--color-bad-line)] bg-[var(--color-bad-bg)]"
               }`}
             >
               <div className="flex items-baseline justify-between gap-2">
@@ -124,7 +124,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
               )}
 
               {revised && (
-                <p className="mt-2 rounded bg-amber-100 p-2 text-xs text-[var(--color-warn)]">
+                <p className="mt-2 rounded bg-[var(--color-warn-bg-strong)] p-2 text-xs text-[var(--color-warn)]">
                   บทนี้อยู่ในเอกสารปรับปรุงครั้งที่ 1/2569 — ตรวจเฉลยกับฉบับแก้ไขก่อนเชื่อ
                 </p>
               )}
@@ -136,7 +136,7 @@ export default async function ResultPage({ params }: { params: Promise<{ id: str
       <div className="flex gap-2 pb-4">
         <Link
           href="/practice"
-          className="flex-1 rounded-lg bg-[var(--color-brand)] py-4 text-center text-sm font-semibold text-white"
+          className="flex-1 rounded-lg bg-[var(--color-brand)] py-4 text-center text-sm font-semibold text-[var(--color-on-brand)]"
         >
           ทำชุดใหม่
         </Link>

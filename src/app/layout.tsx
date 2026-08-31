@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { createClient } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
+import ThemeToggle, { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "AISA Tracker",
@@ -12,7 +13,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#1f5f8b",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f8fa" },
+    { media: "(prefers-color-scheme: dark)", color: "#080c14" },
+  ],
 };
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -29,9 +33,16 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   }
 
   return (
-    <html lang="th">
+    <html lang="th" suppressHydrationWarning>
+      <head>
+        {/* ต้องรันก่อนวาดหน้าจอ ไม่งั้นโหมดมืดจะกระพริบขาวหนึ่งครั้งทุกครั้งที่โหลด */}
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body className="min-h-dvh">
         <div className={`mx-auto max-w-3xl px-4 pt-4 ${signedIn ? "pb-24" : "pb-8"}`}>
+          <div className="mb-2 flex justify-end">
+            <ThemeToggle />
+          </div>
           {children}
         </div>
         {signedIn && <BottomNav />}
