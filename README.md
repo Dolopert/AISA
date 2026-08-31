@@ -72,9 +72,15 @@ cp .env.example .env.local
 ใส่ `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` และ
 `SUPABASE_SERVICE_ROLE_KEY` (service role ใช้เฉพาะสคริปต์ seed ห้ามหลุดไปฝั่ง client)
 
-### 5. นำเข้าหลักสูตร
+### 5. สร้างและนำเข้าหลักสูตร
+
+`data/curriculum.json` **ไม่ได้อยู่ใน repo** (เป็นข้อความจากคู่มือของ ตลท.) ต้องสร้างเองจากไฟล์
+`LOS_CISA-Foundation.pdf` ที่โหลดได้จาก
+[หน้าหลักสูตร CISA Foundation ของ ตลท.](https://www.set.or.th/th/education-research/education/professional/new-cisa/foundation)
 
 ```bash
+pip install pymupdf
+python tools/curriculum.py /path/to/LOS_CISA-Foundation.pdf data/curriculum.json
 node tools/seed.mjs
 ```
 
@@ -97,7 +103,8 @@ repo นี้เก็บ **เครื่องมือ** อย่างเ
 | อยู่ใน repo | ไม่อยู่ใน repo |
 |---|---|
 | โค้ดแอป, schema, สคริปต์นำเข้า | ไฟล์ตำรา/ตะลุยโจทย์ (PDF) |
-| `data/curriculum.json` — ชื่อวิชา/บท/ข้อความ LOS จากคู่มือสาธารณะของ ตลท. | โจทย์, ตัวเลือก, เฉลย, คำอธิบายเฉลย |
+| สคริปต์ที่ *สร้าง* `data/curriculum.json` ได้ | ตัว `data/curriculum.json` เอง (ข้อความ LOS ของ ตลท.) |
+| — | โจทย์, ตัวเลือก, เฉลย, คำอธิบายเฉลย |
 
 `node tools/check-no-content.mjs` บังคับกฎนี้ — จะ fail ถ้ามีไฟล์ PDF/XLSX ถูก track
 หรือมีไฟล์ข้อมูลที่บรรจุเฉลย **รันก่อน push ทุกครั้ง** (หรือ `npm run check` ทีเดียวครบ)
@@ -117,6 +124,38 @@ repo นี้เก็บ **เครื่องมือ** อย่างเ
 
 `tools/thai_pdf.py` คือตัวดึงข้อความไทยจาก PDF ของ ตลท. — **ห้ามใช้ `pdftotext`**
 เพราะมันสลับลำดับสระ/วรรณยุกต์ (`ข้อ` กลายเป็น `ขอ้`) ต้องใช้ PyMuPDF แล้วซ่อม `ำ` ที่แตกเป็น `<พยัญชนะ> า`
+
+## Deploy (Vercel)
+
+เพื่อนใช้ `localhost` ไม่ได้ ต้อง deploy ก่อนถึงจะเป็นระบบหลายคนจริง
+
+**1. Vercel → Add New Project → import repo นี้**
+Framework ตรวจเจอ Next.js อัตโนมัติ ไม่ต้องตั้ง Root Directory (repo นี้คือตัวแอปเลย)
+
+**2. Environment Variables** ใส่ 2 ตัว (อย่าใส่ `SUPABASE_SERVICE_ROLE_KEY` — ใช้เฉพาะสคริปต์ seed บนเครื่อง)
+
+```
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_ANON_KEY
+```
+
+**3. กลับไป Supabase → Authentication → URL Configuration** เพิ่มโดเมน production
+
+| ช่อง | ค่า |
+|---|---|
+| Site URL | `https://<โปรเจกต์>.vercel.app` |
+| Redirect URLs | `https://<โปรเจกต์>.vercel.app/**` และ `http://localhost:3210/**` |
+
+ใส่ทั้งสองอันได้ ไม่ต้องเลือก — dev กับ production ใช้ร่วมกัน
+**Site URL ต้องเป็นโดเมน production** เพราะเป็นค่าที่ลิงก์ในอีเมลอ้างถึง
+
+**4. เพิ่มเพื่อนใน allowlist** แล้วบอกให้เข้าที่โดเมน production
+
+> `/auth/callback` อ่าน `x-forwarded-host` เมื่ออยู่บน production แล้ว
+> ถ้าไม่ทำ Vercel จะ redirect ไปโฮสต์ภายในที่ผู้ใช้เข้าไม่ได้
+
+> **Preview deployment ล็อกอินไม่ได้** เพราะโดเมนสุ่มทุกครั้งและไม่ตรงกับ Redirect URLs
+> ถ้าจำเป็นให้ใส่ pattern `https://<โปรเจกต์>-*.vercel.app/**` เพิ่ม
 
 ## โครงสร้างข้อมูล
 

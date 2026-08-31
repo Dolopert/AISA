@@ -7,17 +7,17 @@ import { createClient } from "@/lib/supabase/server";
  *
  *   token_hash + type  — ใช้ตอน template อีเมลส่ง {{ .TokenHash }} มา
  *                        ทำงานข้ามเครื่องได้ (ขอลิงก์บนคอม กดในเมลบน iPad)
- *   code               — PKCE ปกติ ใช้ได้เฉพาะเบราว์เซอร์เดียวกับที่ขอลิงก์
- *                        เพราะ code verifier อยู่ใน storage ของเครื่องนั้น
- *
- * รองรับทั้งคู่เพราะผู้ใช้จริงอ่านเมลบน iPad แต่ขอลิงก์จากคอมได้
+ *                        ต้องต่อ custom SMTP ก่อนถึงจะแก้ template ได้
+ *   code               — PKCE ปกติ (ค่าเริ่มต้นของแพลนฟรี)
+ *                        ใช้ได้เฉพาะเบราว์เซอร์เดียวกับที่ขอลิงก์
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const code = searchParams.get("code");
 
+  const origin = publicOrigin(request);
   const supabase = await createClient();
 
   if (tokenHash && type) {
@@ -33,6 +33,24 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.redirect(`${origin}/login?error=missing_code`);
+}
+
+/**
+ * origin ที่ผู้ใช้เห็นจริง
+ *
+ * หลัง load balancer ของ Vercel ค่า request.url เป็นโฮสต์ภายใน
+ * ถ้า redirect ตามนั้นผู้ใช้จะถูกส่งไปโดเมนที่ไม่มีอยู่จริง
+ * จึงต้องอ่าน x-forwarded-host เมื่ออยู่บน production
+ */
+function publicOrigin(request: NextRequest): string {
+  const { origin } = new URL(request.url);
+  if (process.env.NODE_ENV !== "production") return origin;
+
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  if (!forwardedHost) return origin;
+
+  const proto = request.headers.get("x-forwarded-proto") ?? "https";
+  return `${proto}://${forwardedHost}`;
 }
 
 function classify(message: string): string {
