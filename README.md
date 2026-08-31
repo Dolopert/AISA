@@ -69,8 +69,18 @@ insert into allowlist (email, is_admin, note) values
 cp .env.example .env.local
 ```
 
-ใส่ `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` และ
-`SUPABASE_SERVICE_ROLE_KEY` (service role ใช้เฉพาะสคริปต์ seed ห้ามหลุดไปฝั่ง client)
+ใส่ `NEXT_PUBLIC_SUPABASE_URL` และ `NEXT_PUBLIC_SUPABASE_ANON_KEY` จาก Settings → API
+
+จากนั้นเพิ่มอีกบรรทัดใน `.env.local` **เฉพาะบนเครื่องคุณ** สำหรับสคริปต์ seed:
+
+```
+SUPABASE_SERVICE_ROLE_KEY=<service_role จาก Settings → API>
+```
+
+> `service_role` **ข้าม RLS ทั้งหมด** — อ่านและแก้ข้อมูลของทุกคนได้โดยไม่สนใจ policy
+> ไม่มีโค้ดในแอปที่อ่านค่านี้ มีแค่ `tools/seed.mjs` ที่รันบนเครื่อง
+> จึงไม่ได้ใส่ไว้ใน `.env.example` เพื่อไม่ให้ Vercel เสนอเป็นตัวแปร production
+> **ห้ามใส่บน Vercel** ถ้าเห็นมันในรายการให้กดลบแถวนั้นทิ้ง
 
 ### 5. สร้างและนำเข้าหลักสูตร
 
