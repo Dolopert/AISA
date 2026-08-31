@@ -95,3 +95,38 @@ export const OFFICIAL_PRACTICE_EXAMS = [
   { subject: "MF", questions: 25, url: "https://finquizz.setgroup.or.th/assessment/110?groupAssignmentId=836" },
   { subject: "PM", questions: 25, url: "https://finquizz.setgroup.or.th/assessment/111?groupAssignmentId=837" },
 ] as const;
+
+/**
+ * เวลาประมาณการที่ใช้ศึกษา ต่อ 1 วัตถุประสงค์การเรียนรู้ (นาที) แยกตามวิชา
+ *
+ * ไม่ใช้ค่าเดียวทั้งหมด เพราะ LOS ที่เขียนว่า "อธิบายความหมายของดอกเบี้ย"
+ * กับ "คำนวณมูลค่าตราสารหนี้ที่มีออปชันแฝง" ใช้เวลาต่างกันหลายเท่า
+ *
+ * เวลาของแต่ละบท = จำนวน LOS ในบทนั้น × ค่าตรงนี้
+ * เป็นค่าประมาณเพื่อวางแผน ไม่ใช่คำสัญญา — ปรับได้ตามความเร็วจริงของคุณ
+ */
+export const STUDY_MINUTES_PER_LOS: Record<string, number> = {
+  "ETH-STD": 12,
+  "ETH-GIPS": 12,
+  "ETH-REG": 12,
+  INV: 18,
+  FSA: 22,
+  CF: 22,
+  EQ: 20,
+  FI: 24,
+  DRV: 25,
+  MF: 15,
+  PM: 18,
+};
+
+export const DEFAULT_STUDY_MINUTES_PER_LOS = 18;
+
+export function studyMinutesPerLos(subjectCode: string | null | undefined): number {
+  if (!subjectCode) return DEFAULT_STUDY_MINUTES_PER_LOS;
+  return STUDY_MINUTES_PER_LOS[subjectCode] ?? DEFAULT_STUDY_MINUTES_PER_LOS;
+}
+
+/** เวลาประมาณการของหนึ่งบท (นาที) */
+export function chapterMinutes(subjectCode: string, losCount: number): number {
+  return losCount * studyMinutesPerLos(subjectCode);
+}

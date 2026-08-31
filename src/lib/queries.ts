@@ -1,6 +1,7 @@
 import { createClient } from "./supabase/server";
 import type { SubjectStat } from "./readiness";
 import { DEFAULT_EXAM_DATE } from "./config";
+import { estimateForChapter, type SubjectProgress } from "./reading";
 
 export type Subject = {
   code: string;
@@ -161,4 +162,96 @@ export async function getRecentSessions(userId: string, limit = 8): Promise<Rece
       correct: attempts.filter((a) => a.is_correct).length,
     };
   });
+}
+
+/** โครงการอ่านทั้งหลักสูตร พร้อมสถานะและเวลาที่ใช้ไปของผู้ใช้คนนี้ */
+export async function getReadingPlan(userId: string): Promise<SubjectProgress[]> {
+  const supabase = await createClient();
+
+  const [{ data: subjects }, { data: chapters }, { data: progress }, { data: spent }] =
+    await Promise.all([
+      supabase
+        .from("subjects")
+        .select("code, name, short_name, group_no, weight")
+        .order("sort"),
+      supabase
+        .from("chapters")
+        .select("id, subject_code, number, title, revised_2569, los(count)")
+        .order("subject_code")
+        .order("number"),
+      supabase.from("reading_progress").select("chapter_id, status").eq("user_id", userId),
+      supabase.from("chapter_minutes_spent").select("chapter_id, minutes, last_studied_on"),
+    ]);
+
+  const statusByChapter = new Map(
+    (progress ?? []).map((r) => [r.chapter_id as number, r.status as string]),
+  );
+  const spentByChapter = new Map(
+    (spent ?? []).map((r) => [
+      r.chapter_id as number,
+      { minutes: Number(r.minutes ?? 0), last: (r.last_studied_on as string | null) ?? null },
+    ]),
+  );
+
+  return (subjects ?? []).map((s) => ({
+    code: s.code as string,
+    name: s.name as string,
+    shortName: s.short_name as string,
+    group: s.group_no as number,
+    weight: Number(s.weight),
+    chapters: (chapters ?? [])
+      .filter((c) => c.subject_code === s.code)
+      .map((c) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const losCount = ((c.los as any)?.[0]?.count as number) ?? 0;
+        const id = c.id as number;
+        const used = spentByChapter.get(id);
+        return {
+          chapterId: id,
+          number: c.number as number,
+          title: (c.title as string) || `บทที่ ${c.number}`,
+          revised2569: Boolean(c.revised_2569),
+          losCount,
+          estimateMinutes: estimateForChapter(s.code as string, losCount),
+          spentMinutes: used?.minutes ?? 0,
+          status: (statusByChapter.get(id) as "todo" | "reading" | "done") ?? "todo",
+          lastStudiedOn: used?.last ?? null,
+        };
+      }),
+  }));
+}
+
+export type LosItem = { number: string; text: string };
+
+/** หัวข้อย่อยของบท ใช้แสดงว่าบทนั้นครอบคลุมอะไรบ้าง */
+export async function getLosForChapters(chapterIds: number[]): Promise<Map<number, LosItem[]>> {
+  const map = new Map<number, LosItem[]>();
+  if (chapterIds.length === 0) return map;
+
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("los")
+    .select("chapter_id, number, text")
+    .in("chapter_id", chapterIds)
+    .order("number");
+
+  for (const row of data ?? []) {
+    const id = row.chapter_id as number;
+    if (!map.has(id)) map.set(id, []);
+    map.get(id)!.push({ number: row.number as string, text: row.text as string });
+  }
+  return map;
+}
+
+/** นาทีที่อ่านไปในแต่ละวัน ย้อนหลัง n วัน */
+export async function getDailyReading(days = 14): Promise<Map<string, number>> {
+  const supabase = await createClient();
+  const since = new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+  const { data } = await supabase
+    .from("daily_reading")
+    .select("studied_on, minutes")
+    .gte("studied_on", since)
+    .order("studied_on", { ascending: false });
+
+  return new Map((data ?? []).map((r) => [r.studied_on as string, Number(r.minutes)]));
 }

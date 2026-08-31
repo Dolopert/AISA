@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 
 const LINKS = [
   { href: "/", label: "ภาพรวม" },
-  { href: "/practice", label: "ทำข้อสอบ" },
+  { href: "/read", label: "อ่าน" },
+  { href: "/practice", label: "ข้อสอบ" },
   { href: "/topics", label: "จุดอ่อน" },
   { href: "/setup", label: "ตั้งค่า" },
 ];

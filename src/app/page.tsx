@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getSettings, getSubjectStats, getRecentSessions } from "@/lib/queries";
-import { computeReadiness, prioritise, pct, daysUntil, questionsInExam } from "@/lib/readiness";
-import { EXAM, REVISION_NOTICE, timeBudget } from "@/lib/config";
+import {
+  getSettings,
+  getSubjectStats,
+  getReadingPlan,
+  getDailyReading,
+} from "@/lib/queries";
+import { computeReadiness, pct, daysUntil } from "@/lib/readiness";
+import { summarise, dailyReadingQuota, formatMinutes } from "@/lib/reading";
+import { EXAM, REVISION_NOTICE } from "@/lib/config";
 
 export const dynamic = "force-dynamic";
 
@@ -13,16 +19,33 @@ export default async function Dashboard() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [settings, stats, recent] = await Promise.all([
+  const [settings, plan, stats, daily] = await Promise.all([
     getSettings(user.id),
+    getReadingPlan(user.id),
     getSubjectStats(user.id),
-    getRecentSessions(user.id, 5),
+    getDailyReading(7),
   ]);
 
+  const summary = summarise(plan);
   const readiness = computeReadiness(stats);
-  const priorities = prioritise(stats, settings.target_overall);
   const left = daysUntil(settings.exam_date);
-  const totalAnswered = stats.reduce((n, s) => n + s.answered, 0);
+  const quota = dailyReadingQuota(summary.estimateMinutesRemaining, left);
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Bangkok" });
+  const todayMinutes = daily.get(today) ?? 0;
+  const answered = stats.reduce((n, s) => n + s.answered, 0);
+
+  // วิชาที่ยังเหลือเยอะที่สุด ถ่วงด้วยสัดส่วนข้อสอบจริง
+  const nextUp = plan
+    .map((s) => {
+      const total = s.chapters.reduce((n, c) => n + c.estimateMinutes, 0);
+      const remaining = s.chapters
+        .filter((c) => c.status !== "done")
+        .reduce((n, c) => n + c.estimateMinutes, 0);
+      return { ...s, total, remaining, score: (remaining / 60) * (s.weight / 100) };
+    })
+    .filter((s) => s.remaining > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 4);
 
   return (
     <main className="space-y-5">
@@ -33,214 +56,111 @@ export default async function Dashboard() {
         </span>
       </header>
 
-      {totalAnswered === 0 ? (
-        <EmptyState />
-      ) : (
-        <ReadinessCard readiness={readiness} target={settings.target_overall} />
-      )}
-
-      <section className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-4">
-        <h2 className="mb-3 text-sm font-semibold">ควรซ้อมวิชานี้ก่อน</h2>
-        <ol className="space-y-2">
-          {priorities.slice(0, 4).map((p, i) => {
-            const s = stats.find((x) => x.code === p.code)!;
-            return (
-              <li key={p.code} className="flex items-baseline gap-3 text-sm">
-                <span className="w-4 shrink-0 text-[var(--color-muted)] tabular">{i + 1}</span>
-                <div className="min-w-0 flex-1">
-                  <Link
-                    href={`/practice?subject=${p.code}`}
-                    className="font-medium text-[var(--color-brand)]"
-                  >
-                    {p.shortName}
-                  </Link>
-                  <p className="text-xs text-[var(--color-muted)]">{p.reason}</p>
-                </div>
-                <span className="shrink-0 text-xs text-[var(--color-muted)] tabular">
-                  ~{questionsInExam(s.weight)} ข้อ
-                </span>
-              </li>
-            );
-          })}
-        </ol>
-      </section>
-
-      <RevisionCard />
-
-      <section className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-4">
-        <h2 className="mb-3 text-sm font-semibold">ความแม่นรายวิชา</h2>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-xs text-[var(--color-muted)]">
-              <th className="pb-2 font-normal">วิชา</th>
-              <th className="pb-2 text-right font-normal">สัดส่วน</th>
-              <th className="pb-2 text-right font-normal">แม่น</th>
-              <th className="pb-2 text-right font-normal">วิ/ข้อ</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.map((s) => {
-              const budget = timeBudget(s.code);
-              const slow = s.avgSeconds !== null && s.avgSeconds > budget;
-              return (
-                <tr key={s.code} className="border-t border-[var(--color-line)]">
-                  <td className="py-2">
-                    {s.shortName}
-                    {s.group === 1 && (
-                      <span className="ml-1 text-[10px] text-[var(--color-warn)]">กลุ่ม 1</span>
-                    )}
-                  </td>
-                  <td className="py-2 text-right tabular text-[var(--color-muted)]">{s.weight}%</td>
-                  <td
-                    className={`py-2 text-right tabular font-medium ${
-                      s.accuracy === null
-                        ? "text-[var(--color-muted)]"
-                        : s.accuracy >= settings.target_overall
-                          ? "text-[var(--color-good)]"
-                          : "text-[var(--color-bad)]"
-                    }`}
-                  >
-                    {pct(s.accuracy)}
-                  </td>
-                  <td
-                    className={`py-2 text-right tabular ${
-                      slow ? "text-[var(--color-warn)]" : "text-[var(--color-muted)]"
-                    }`}
-                    title={`งบ ${budget} วิ`}
-                  >
-                    {s.avgSeconds !== null ? Math.round(s.avgSeconds) : "—"}
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        <p className="mt-2 text-xs text-[var(--color-muted)]">
-          คอลัมน์ วิ/ข้อ เทียบกับงบเวลาของวิชานั้น ไม่ใช่ 90 วิเท่ากันหมด
+      <section className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-5">
+        <p className="text-sm text-[var(--color-muted)]">อ่านไปแล้ว</p>
+        <p className="tabular text-5xl font-bold">
+          {Math.round(summary.coverage * 100)}
+          <span className="text-2xl text-[var(--color-muted)]">%</span>
         </p>
+        <p className="mt-1 text-sm text-[var(--color-muted)]">
+          {summary.chaptersDone}/{summary.chaptersTotal} บท · เหลือ{" "}
+          {formatMinutes(summary.estimateMinutesRemaining)}
+        </p>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+          <div
+            className="h-full rounded-full bg-[var(--color-brand)]"
+            style={{ width: `${Math.round(summary.coverage * 100)}%` }}
+          />
+        </div>
+
+        <div className="mt-4 flex items-baseline justify-between border-t border-[var(--color-line)] pt-3 text-sm">
+          <span className="text-[var(--color-muted)]">วันนี้</span>
+          <span className="tabular">
+            <strong className={todayMinutes >= quota ? "text-[var(--color-good)]" : ""}>
+              {formatMinutes(todayMinutes)}
+            </strong>
+            <span className="text-[var(--color-muted)]"> / {formatMinutes(quota)}</span>
+          </span>
+        </div>
       </section>
 
-      {recent.length > 0 && (
+      {nextUp.length > 0 && (
         <section className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-4">
-          <h2 className="mb-3 text-sm font-semibold">ชุดล่าสุด</h2>
-          <ul className="space-y-2 text-sm">
-            {recent.map((s) => (
-              <li key={s.id} className="flex items-baseline justify-between gap-3">
-                <Link
-                  href={s.status === "active" ? `/session/${s.id}` : `/session/${s.id}/result`}
-                  className="min-w-0 flex-1 truncate text-[var(--color-brand)]"
-                >
-                  {s.label}
+          <h2 className="mb-1 text-sm font-semibold">ควรอ่านวิชานี้ก่อน</h2>
+          <p className="mb-3 text-xs text-[var(--color-muted)]">
+            เรียงจากงานที่เหลือ ถ่วงด้วยสัดส่วนข้อสอบจริง — วิชาที่เหลือเยอะแต่ออกสอบน้อย
+            ไม่ควรมาก่อนวิชาที่เหลือพอกันแต่ออก 17%
+          </p>
+          <ol className="space-y-2">
+            {nextUp.map((s, i) => (
+              <li key={s.code} className="flex items-baseline gap-3 text-sm">
+                <span className="w-4 shrink-0 tabular text-[var(--color-muted)]">{i + 1}</span>
+                <Link href="/read" className="min-w-0 flex-1 truncate text-[var(--color-brand)]">
+                  {s.shortName}
                 </Link>
-                <span className="shrink-0 tabular text-[var(--color-muted)]">
-                  {s.status === "active"
-                    ? "ยังทำอยู่"
-                    : `${s.correct}/${s.answered || s.question_count}`}
+                <span className="shrink-0 text-xs tabular text-[var(--color-muted)]">
+                  เหลือ {formatMinutes(s.remaining)} · {s.weight}%
                 </span>
               </li>
             ))}
-          </ul>
+          </ol>
         </section>
       )}
+
+      <section className="rounded-xl border border-[var(--color-warn)]/30 bg-amber-50 p-4">
+        <h2 className="text-sm font-semibold text-[var(--color-warn)]">{REVISION_NOTICE.label}</h2>
+        <p className="mt-1 text-xs">
+          มีผลกับ{REVISION_NOTICE.effective} — ครอบคลุมรอบสอบของคุณ
+          8 บทที่ถูกแก้จะมีป้ายเตือนในแผนการอ่าน ให้อ่านจากฉบับปรับปรุง ไม่ใช่ตำราเดิม
+        </p>
+      </section>
+
+      <section className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-4">
+        <div className="flex items-baseline justify-between">
+          <h2 className="text-sm font-semibold">ผลจากการทำข้อสอบ</h2>
+          <Link href="/practice" className="text-xs text-[var(--color-brand)]">
+            ไปทำข้อสอบ
+          </Link>
+        </div>
+
+        {answered === 0 ? (
+          <p className="mt-2 text-xs text-[var(--color-muted)]">
+            ยังไม่เคยทำโจทย์ — การอ่านจบบอกว่าคุณผ่านเนื้อหามาแล้ว แต่ไม่ได้บอกว่าตอบได้
+            ซึ่งเป็นสิ่งเดียวที่ข้อสอบวัด ทำสัก 20 ข้อเมื่ออ่านจบวิชาแรกจะเห็นภาพขึ้นเยอะ
+          </p>
+        ) : (
+          <div className="mt-2 space-y-1 text-sm">
+            <Row
+              label="คะแนนคาดการณ์"
+              value={pct(readiness.projected)}
+              tone={readiness.passesOverall ? "good" : "bad"}
+            />
+            <Row
+              label="กลุ่มวิชาที่ 1 — จรรยาบรรณ"
+              value={pct(readiness.group1)}
+              tone={readiness.group1 !== null && !readiness.passesGroup1 ? "bad" : "good"}
+            />
+            <p className="pt-1 text-xs text-[var(--color-muted)]">
+              เกณฑ์ผ่าน {pct(EXAM.passOverall)} ทั้งสองช่อง · อ้างอิงจาก {answered} ข้อที่ทำไปแล้ว
+            </p>
+          </div>
+        )}
+      </section>
     </main>
   );
 }
 
-function EmptyState() {
+function Row({ label, value, tone }: { label: string; value: string; tone: "good" | "bad" }) {
   return (
-    <section className="rounded-xl border border-dashed border-[var(--color-line)] bg-[var(--color-card)] p-5">
-      <h2 className="font-semibold">ยังไม่มีข้อมูล</h2>
-      <p className="mt-1 text-sm text-[var(--color-muted)]">
-        ทำชุดวัดระดับสั้น ๆ ก่อน แล้วระบบจะรู้ว่าควรให้คุณซ้อมอะไรก่อน — เดาไม่ได้ถ้าไม่มีข้อมูล
-      </p>
-      <Link
-        href="/practice"
-        className="mt-4 inline-block rounded-lg bg-[var(--color-brand)] px-4 py-3 text-sm font-semibold text-white"
-      >
-        เริ่มวัดระดับ
-      </Link>
-    </section>
-  );
-}
-
-function RevisionCard() {
-  return (
-    <section className="rounded-xl border border-[var(--color-warn)]/30 bg-amber-50 p-4">
-      <h2 className="text-sm font-semibold text-[var(--color-warn)]">
-        {REVISION_NOTICE.label}
-      </h2>
-      <p className="mt-1 text-xs text-[var(--color-ink)]">
-        มีผลกับ{REVISION_NOTICE.effective} — ครอบคลุมรอบสอบของคุณ
-        เนื้อหาที่ถูกแก้ต้องอ่านจากฉบับปรับปรุง ไม่ใช่ตำราเดิม และเฉลยเก่าในหัวข้อเหล่านี้อาจใช้ไม่ได้
-      </p>
-      <ul className="mt-2 space-y-0.5 text-xs text-[var(--color-muted)]">
-        <li>หลักการลงทุน บทที่ 6 (เรียบเรียงใหม่ทั้งบท)</li>
-        <li>การเงินธุรกิจ บทที่ 3</li>
-        <li>ตราสารทุน บทที่ 2, 8</li>
-        <li>อนุพันธ์ บทที่ 1, 2, 3, 6</li>
-      </ul>
-    </section>
-  );
-}
-
-function ReadinessCard({
-  readiness,
-  target,
-}: {
-  readiness: ReturnType<typeof computeReadiness>;
-  target: number;
-}) {
-  const g1Failed = readiness.group1 !== null && !readiness.passesGroup1;
-
-  return (
-    <section
-      className={`rounded-xl border p-5 ${
-        g1Failed
-          ? "border-[var(--color-bad)] bg-red-50"
-          : "border-[var(--color-line)] bg-[var(--color-card)]"
-      }`}
-    >
-      <p className="text-sm text-[var(--color-muted)]">คะแนนคาดการณ์</p>
-      <p
-        className={`tabular text-5xl font-bold ${
-          readiness.passesOverall ? "text-[var(--color-good)]" : "text-[var(--color-bad)]"
+    <div className="flex justify-between gap-3">
+      <span className="text-[var(--color-muted)]">{label}</span>
+      <span
+        className={`tabular font-semibold ${
+          tone === "good" ? "text-[var(--color-good)]" : "text-[var(--color-bad)]"
         }`}
       >
-        {pct(readiness.projected)}
-      </p>
-      <p className="mt-1 text-xs text-[var(--color-muted)]">
-        เกณฑ์ผ่าน {pct(EXAM.passOverall)} · เป้าคุณ {pct(target)}
-      </p>
-
-      <div className="mt-4 border-t border-[var(--color-line)] pt-3">
-        <div className="flex items-baseline justify-between text-sm">
-          <span>กลุ่มวิชาที่ 1 — จรรยาบรรณ</span>
-          <span
-            className={`tabular font-semibold ${
-              g1Failed ? "text-[var(--color-bad)]" : "text-[var(--color-good)]"
-            }`}
-          >
-            {pct(readiness.group1)}
-          </span>
-        </div>
-        {g1Failed && (
-          <p className="mt-1 text-xs font-medium text-[var(--color-bad)]">
-            ต่ำกว่า 70% — ต่อให้คะแนนรวมผ่าน ก็ตกทั้งสนาม
-          </p>
-        )}
-        {readiness.group1 === null && (
-          <p className="mt-1 text-xs text-[var(--color-muted)]">
-            ยังไม่เคยทำโจทย์กลุ่มนี้ — นี่คือวิชาที่คนตกมากที่สุดเพราะมองข้าม
-          </p>
-        )}
-      </div>
-
-      {readiness.uncoveredWeight > 0 && (
-        <p className="mt-3 text-xs text-[var(--color-muted)]">
-          ตัวเลขนี้อ้างอิงจากวิชาที่คิดเป็น {Math.round(readiness.coveredWeight)}% ของข้อสอบ
-          อีก {Math.round(readiness.uncoveredWeight)}% ยังไม่มีข้อมูล จึงยังเชื่อได้ไม่เต็มที่
-        </p>
-      )}
-    </section>
+        {value}
+      </span>
+    </div>
   );
 }
