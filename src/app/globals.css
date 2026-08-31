@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Thai", "Noto Sans Thai", system-ui, -apple-system, sans-serif;
+
+  --color-ink: #12151c;
+  --color-paper: #f7f8fa;
+  --color-card: #ffffff;
+  --color-line: #e3e6ec;
+  --color-muted: #6b7280;
+  --color-brand: #1f5f8b;
+  --color-good: #0f7b52;
+  --color-warn: #b45309;
+  --color-bad: #b3261e;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  /* กันการซูมเด้งตอนกดปุ่มเร็ว ๆ บน iPad */
+  touch-action: manipulation;
+}
+
+/* ปุ่มตอบต้องกดได้ด้วยนิ้วโดยไม่ต้องเล็ง */
+.answer-key {
+  min-height: 4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
