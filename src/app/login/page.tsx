@@ -110,6 +110,7 @@ function errorFromQuery(code: string | null): string | null {
   if (!code) return null;
   if (code === "not_allowed") return "อีเมลนี้ไม่อยู่ในรายชื่อที่อนุญาต";
   if (code === "missing_code") return "ลิงก์ไม่สมบูรณ์ ลองขอลิงก์ใหม่อีกครั้ง";
-  if (code === "expired") return "ลิงก์หมดอายุหรือถูกใช้ไปแล้ว ขอลิงก์ใหม่ได้เลย";
+  if (code === "expired")
+    return "ลิงก์ใช้ไม่ได้ — หมดอายุ ถูกใช้ไปแล้ว หรือเปิดคนละเบราว์เซอร์กับที่ขอ ขอลิงก์ใหม่ได้เลย";
   return "เข้าระบบไม่สำเร็จ ลองใหม่อีกครั้ง";
 }

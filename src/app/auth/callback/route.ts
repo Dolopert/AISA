@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { EmailOtpType } from "@supabase/supabase-js";
+import type { AuthError, EmailOtpType } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -22,13 +22,13 @@ export async function GET(request: NextRequest) {
 
   if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
-    if (error) return NextResponse.redirect(`${origin}/login?error=${classify(error.message)}`);
+    if (error) return NextResponse.redirect(`${origin}/login?error=${classify(error)}`);
     return NextResponse.redirect(`${origin}/`);
   }
 
   if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (error) return NextResponse.redirect(`${origin}/login?error=${classify(error.message)}`);
+    if (error) return NextResponse.redirect(`${origin}/login?error=${classify(error)}`);
     return NextResponse.redirect(`${origin}/`);
   }
 
@@ -53,8 +53,25 @@ function publicOrigin(request: NextRequest): string {
   return `${proto}://${forwardedHost}`;
 }
 
-function classify(message: string): string {
-  if (/expired|invalid|already/i.test(message)) return "expired";
-  if (/allowlist|ไม่อยู่ในรายชื่อ/i.test(message)) return "not_allowed";
+/**
+ * แปลง error ของ Supabase เป็นรหัสที่หน้า login เอาไปแสดงเป็นภาษาคน
+ *
+ * ใช้ error.code เป็นหลัก ไม่ใช่ข้อความ — ข้อความเป็นภาษาอังกฤษที่เปลี่ยนได้
+ * และให้ผลไม่ตรงกันระหว่างเครื่องกับ production มาแล้ว
+ */
+const EXPIRED_CODES = new Set([
+  "otp_expired",
+  "flow_state_expired",
+  "flow_state_not_found",
+  "validation_failed", // ลิงก์ไม่ครบพารามิเตอร์ หรือเปิดคนละเบราว์เซอร์กับที่ขอ
+  "bad_code_verifier",
+]);
+
+function classify(error: AuthError): string {
+  const code = error.code ?? "";
+  if (EXPIRED_CODES.has(code)) return "expired";
+  if (/allowlist|ไม่อยู่ในรายชื่อ|Database error/i.test(error.message)) return "not_allowed";
+  // เผื่อ SDK ไม่ได้ให้ code มา ยังอ่านข้อความเป็นทางสำรอง
+  if (/expired|invalid|already used/i.test(error.message)) return "expired";
   return "failed";
 }
