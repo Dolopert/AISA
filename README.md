@@ -59,8 +59,8 @@
 
 ```sql
 insert into allowlist (email, is_admin, note) values
-  ('you@example.com', true,  'เจ้าของระบบ'),
-  ('เพื่อน@example.com',   false, 'New Breed 2026');
+  ('you@example.com',    true,  'เจ้าของระบบ'),
+  ('friend@example.com', false, 'New Breed 2026');
 ```
 
 ### 4. ตั้งค่า env
