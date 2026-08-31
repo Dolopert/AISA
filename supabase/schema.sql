@@ -218,6 +218,8 @@ with ranked as (
   from attempts a
   join questions q on q.id = a.question_id
   where q.los_id is not null
+    -- กรองด้วย auth.uid() ในตัว view อีกชั้น เผื่อ security_invoker ไม่ติด
+    and a.user_id = auth.uid()
 ),
 latest_two as (
   select user_id, los_id, question_id,
@@ -255,6 +257,7 @@ select
 from attempts a
 join questions q on q.id = a.question_id
 where q.subject_code is not null
+  and a.user_id = auth.uid()
 group by a.user_id, q.subject_code;
 
 -- ---------------------------------------------------------------- RLS

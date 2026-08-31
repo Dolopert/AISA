@@ -1,10 +1,16 @@
 # PROGRESS — AISA Tracker
 
-## สถานะ: P1 เขียนเสร็จ · ยังไม่ได้ทดสอบกับ Supabase จริง
+## สถานะ: P1 ใช้งานได้จริงบน production · รอเทสต์ล็อกอิน
 
-typecheck ผ่าน · `next build` ผ่าน · หน้า login เรนเดอร์จริงบน dev server แล้ว
-**`schema.sql` รันบน Supabase จริงแล้ว** (Success, no rows returned) — ข้อกังวลข้อ 1 ตกไป
-แต่ flow ล็อกอินและทุก query ยังไม่เคยเดินจริง ดู "ที่ยังไม่ได้พิสูจน์" ด้านล่าง
+- deploy แล้วที่ **https://aisa-nu.vercel.app** — middleware เด้ง `/topics` → `/login` ถูกต้อง
+  แปลว่า env vars บน Vercel ทำงาน ไม่มี console error
+- `schema.sql` รันบน Supabase แล้ว
+- **seed หลักสูตรเข้า DB แล้ว: 11 วิชา · 69 บท · 515 LOS · 8 บทติดธงปรับปรุง 1/2569**
+  ตรวจจากฐานข้อมูลจริง สัดส่วนรวม 100%
+- allowlist มีเจ้าของระบบ 1 รายการ (ลบแถวขยะที่คัดลอก placeholder มาแล้ว)
+- repo: https://github.com/Dolopert/AISA (history สะอาด ไม่มีเนื้อหา ตลท. ไม่มีอีเมลจริง)
+
+ยังไม่เคยล็อกอินสำเร็จสักครั้ง ดู "ที่ยังไม่ได้พิสูจน์" ด้านล่าง
 
 ---
 
@@ -53,8 +59,9 @@ typecheck ผ่าน · `next build` ผ่าน · หน้า login เร
 
 ## ที่ยังไม่ได้พิสูจน์ (ต้องทำก่อนใช้จริง)
 
-1. **ยังไม่ได้ยืนยันว่า view ได้ `security_invoker`** — ถ้า Postgres ไม่รับ option นี้
-   RLS จะถูกข้ามและทุกคนอ่านสถิติของคนอื่นได้ ต้องรัน query ตรวจ `pg_class.reloptions`
+1. **ต้องรัน `supabase/patch-01-lock-views-to-caller.sql`** — view เดิมพึ่ง `security_invoker`
+   อย่างเดียว ซึ่งยังไม่เคยยืนยันว่าติดจริง patch นี้เพิ่มการกรอง `auth.uid()`
+   ลงในตัว view ทำให้ปลอดภัยแม้ option จะไม่ติด **ยังไม่ได้รัน**
 2. **flow auth ทั้งเส้นยังไม่เคยเดิน** — trigger `handle_new_user` ที่ปฏิเสธอีเมลนอก allowlist
    ยังไม่รู้ว่า Supabase จะโยน error หน้าตาแบบไหน (หน้า login เดาไว้ว่าเป็น `Database error`
    ถ้าไม่ตรงต้องแก้ตัวจับใน `src/app/login/page.tsx`)
