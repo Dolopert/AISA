@@ -90,9 +90,10 @@ for (const view of ["subject_accuracy", "los_mastery"]) {
 // 4 — /auth/callback ต้องเด้งกลับหน้า login พร้อมรหัส error เมื่อลิงก์เสีย
 for (const [label, qs, expect] of [
   ["ไม่มีพารามิเตอร์", "", "missing_code"],
+  // ลิงก์เสียทุกแบบให้ผลเดียวกัน เพราะทางแก้เดียวกันคือขอลิงก์ใหม่
   ["code ปลอม", "?code=not-a-real-code", "expired"],
   ["token_hash ปลอม", "?token_hash=deadbeef&type=magiclink", "expired"],
-  ["type ไม่ถูกต้อง", "?token_hash=deadbeef&type=bogus", "failed"],
+  ["type ไม่ถูกต้อง", "?token_hash=deadbeef&type=bogus", "expired"],
 ]) {
   const res = await fetch(`${BASE}/auth/callback${qs}`, { redirect: "manual" });
   const location = res.headers.get("location") ?? "";

@@ -56,22 +56,14 @@ function publicOrigin(request: NextRequest): string {
 /**
  * แปลง error ของ Supabase เป็นรหัสที่หน้า login เอาไปแสดงเป็นภาษาคน
  *
- * ใช้ error.code เป็นหลัก ไม่ใช่ข้อความ — ข้อความเป็นภาษาอังกฤษที่เปลี่ยนได้
- * และให้ผลไม่ตรงกันระหว่างเครื่องกับ production มาแล้ว
+ * ที่ปลายทางของลิงก์ ความล้มเหลวทุกแบบมีทางแก้เดียวกันคือ "ขอลิงก์ใหม่"
+ * ไม่ว่าจะหมดอายุ ถูกใช้ไปแล้ว พารามิเตอร์เพี้ยน หรือเปิดคนละเบราว์เซอร์กับที่ขอ
+ * จึงยุบให้เหลือข้อความเดียวที่บอกทางออกได้จริง แทนการแยกประเภทให้ละเอียด
+ * แล้วได้ข้อความอย่าง "เข้าระบบไม่สำเร็จ ลองใหม่" ซึ่งไม่ได้บอกว่าต้องทำอะไร
+ *
+ * เหลือแยกไว้กรณีเดียวคืออีเมลนอก allowlist เพราะขอลิงก์ใหม่กี่ครั้งก็ไม่ช่วย
  */
-const EXPIRED_CODES = new Set([
-  "otp_expired",
-  "flow_state_expired",
-  "flow_state_not_found",
-  "validation_failed", // ลิงก์ไม่ครบพารามิเตอร์ หรือเปิดคนละเบราว์เซอร์กับที่ขอ
-  "bad_code_verifier",
-]);
-
 function classify(error: AuthError): string {
-  const code = error.code ?? "";
-  if (EXPIRED_CODES.has(code)) return "expired";
   if (/allowlist|ไม่อยู่ในรายชื่อ|Database error/i.test(error.message)) return "not_allowed";
-  // เผื่อ SDK ไม่ได้ให้ code มา ยังอ่านข้อความเป็นทางสำรอง
-  if (/expired|invalid|already used/i.test(error.message)) return "expired";
-  return "failed";
+  return "expired";
 }
