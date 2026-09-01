@@ -11,3 +11,5 @@ __pycache__/
 # แต่ก็ยังเป็นข้อความลิขสิทธิ์ของเขา repo นี้จึงไม่เก็บไว้
 # สร้างเองด้วย: python tools/curriculum.py <LOS.pdf> data/curriculum.json
 data/curriculum.json
+
+.next-verify/
