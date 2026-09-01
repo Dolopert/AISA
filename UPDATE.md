@@ -2,7 +2,7 @@
 
 อ่านไฟล์นี้ก่อน แล้วค่อยดู `README.md` (วิธีติดตั้ง) และ `PROGRESS.md` (ประวัติการตัดสินใจ)
 
-**อัปเดตล่าสุด:** 1 ก.ย. 2569 · commit `049ff81`
+**อัปเดตล่าสุด:** 1 ก.ย. 2569 · commit `cd91913`
 
 ---
 
@@ -33,6 +33,7 @@
 - หลักสูตรอยู่ใน DB แล้ว: **11 วิชา · 69 บท · 515 LOS** สัดส่วนรวม 100%
 - ธีมสว่าง/มืด (ดำน้ำเงิน) · mobile-first
 - บัญชีผู้ดูแล `admin@aisa-tracker.local` รหัสอยู่ใน `.admin-credentials.local` (gitignore ไว้)
+- การเปลี่ยนหน้าไม่ค้างเงียบแล้ว — มี `loading.tsx` ครบทุกหน้าหลัก
 
 ## ยังไม่เคยพิสูจน์
 
@@ -40,6 +41,8 @@
    ยังไม่มีใครกดจริง ปฏิทินจึงยังไม่เคยแสดงข้อมูล
 2. **RLS แยกผู้ใช้ยังพิสูจน์ไม่ได้** เพราะมีผู้ใช้จริงคนเดียว ต้องมีผู้ใช้ที่ 2 ถึงจะยืนยันได้
 3. **คลังโจทย์ว่าง** — หน้าทำข้อสอบขึ้น "Coming Soon" ตามที่ออกแบบไว้
+4. **skeleton ของหน้าที่ต้องล็อกอินยังไม่เคยเห็นบนข้อมูลจริง** — ยืนยันได้แค่ว่า build ผ่าน
+   และหน้า login เรนเดอร์ปกติ ถ้าความสูงไม่พอดีจะเห็นหน้ากระตุกตอนข้อมูลจริงมาแทน
 
 ---
 
@@ -133,6 +136,34 @@ npm run check
 
 **8. Supabase บังคับ identifier เป็นรูปแบบอีเมล** พิมพ์ `admin` เฉย ๆ ไม่ผ่าน
 แก้ที่ชั้น UI ด้วย `toLoginEmail()` ไม่ใช่ที่ฐานข้อมูล
+
+**9. `force-dynamic` + ไม่มี `loading.tsx` = กดเมนูแล้วเหมือนแอปค้าง** Next ไม่มี
+loading boundary ให้ prefetch เอามาแสดง เลยค้างหน้าเดิมเงียบ ๆ จนกว่า server จะ render
+เสร็จทั้งหน้า **ทุกหน้าใหม่ที่เป็น dynamic ต้องมี `loading.tsx` คู่กันเสมอ**
+
+**10. `createClient()` ตัวใหม่ทุกครั้ง = `auth.getUser()` ยิงซ้ำ** เคยยิง 3 ครั้งต่อการเปลี่ยนหน้า
+(middleware + layout + page) ทิ้งไป ~400 ms เปล่า ๆ ตอนนี้ `createClient`/`getUser`
+ถูก `cache()` ครอบใน `src/lib/supabase/server.ts` แล้ว — **ใน server component ให้เรียก
+`getUser()` อย่าเรียก `supabase.auth.getUser()` ตรง ๆ** (route handler ไม่เป็นไร เรียกครั้งเดียวอยู่แล้ว)
+
+---
+
+## ประสิทธิภาพ — ที่ทำไปแล้ว (`cd91913`)
+
+วัดจากเครื่อง dev: หนึ่ง round-trip ไป Supabase ≈ **180-200 ms** หน้าภาพรวมเคยใช้ **11 round-trip**
+
+| แก้อะไร | ได้อะไร |
+|---|---|
+| `loading.tsx` ครบทุกหน้าหลัก + `components/Skeleton.tsx` | โครงหน้าขึ้นทันทีที่กด · prefetch ทำงานได้ |
+| `cache()` ครอบ `createClient` + `getUser()` ตัวใหม่ | auth 3 -> 2 ครั้ง |
+| memo หลักสูตร (`subjects`/`chapters`/`los`) TTL 10 นาที ใน `queries.ts` | data 8 -> 5 ครั้ง (`subjects` เคยถูก query ซ้ำสองรอบในหน้าเดียว) |
+| `getAllLos()` แทน `getLosForChapters()` | `/read` ตัด waterfall — 515 แถวไม่ต้องรอ `getReadingPlan` อีก |
+
+memo เป็น in-memory ต่อ process **ไม่จำผลว่าง** (RLS ตอบว่างถ้า request ไม่มี session)
+และ **ไม่จำ error** — seed หลักสูตรใหม่แล้วรอไม่เกิน 10 นาทีหรือ redeploy
+
+**ที่ยังไม่ได้แตะ:** middleware ยัง `getUser()` ทุก request รวมถึง RSC prefetch (จำเป็นกับ auth)
+ปฏิทินการอ่านยังเป็น client fetch หลัง mount (`/api/reading/calendar`) ซึ่งกิน round-trip เพิ่มอีก 2
 
 ---
 
