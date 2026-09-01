@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient, configError } from "@/lib/supabase/client";
+import { toLoginEmail, USERNAME_DOMAIN } from "@/lib/config";
 
 export default function LoginPage() {
   return (
@@ -33,7 +34,8 @@ function LoginForm() {
 
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
+      // พิมพ์ "admin" ก็พอ ระบบเติมโดเมนให้เอง
+      email: toLoginEmail(email),
       password,
     });
 
@@ -136,17 +138,28 @@ function LoginForm() {
 
           <form onSubmit={mode === "password" ? signInWithPassword : sendLink} className="space-y-3">
             <label className="block">
-              <span className="text-xs text-[var(--color-muted)]">อีเมล</span>
+              <span className="text-xs text-[var(--color-muted)]">
+                {mode === "password" ? "อีเมล หรือ ชื่อผู้ใช้" : "อีเมล"}
+              </span>
               <input
-                type="email"
+                // โหมดรหัสผ่านรับชื่อสั้น ๆ ได้ จึงใช้ type text
+                // ถ้าเป็น type email เบราว์เซอร์จะบล็อกคำว่า admin ตั้งแต่ยังไม่ส่ง
+                type={mode === "password" ? "text" : "email"}
                 required
-                autoComplete="email"
+                autoComplete={mode === "password" ? "username" : "email"}
                 inputMode="email"
+                autoCapitalize="none"
+                spellCheck={false}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
+                placeholder={mode === "password" ? "admin หรือ you@example.com" : "you@example.com"}
                 className="mt-1 w-full rounded-lg border border-[var(--color-line)] px-3 py-4 text-base"
               />
+              {mode === "password" && email.length > 0 && !email.includes("@") && (
+                <span className="mt-1 block text-xs text-[var(--color-muted)]">
+                  จะเข้าระบบเป็น {email.trim()}@{USERNAME_DOMAIN}
+                </span>
+              )}
             </label>
 
             {mode === "password" && (

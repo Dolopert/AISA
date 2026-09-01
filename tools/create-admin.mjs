@@ -29,7 +29,16 @@ if (!url || !serviceKey) {
   process.exit(1);
 }
 
-const email = process.argv[2] ?? "admin@aisa-tracker.local";
+const USERNAME_DOMAIN = "aisa-tracker.local";
+const raw = process.argv[2] ?? "admin";
+// รับ "admin" เฉย ๆ ได้ เติมโดเมนให้เหมือนที่หน้าเข้าสู่ระบบทำ
+const email = raw.includes("@") ? raw.trim() : `${raw.trim()}@${USERNAME_DOMAIN}`;
+
+// ตรวจก่อนแตะ allowlist ไม่งั้นค่าที่ใช้ไม่ได้จะค้างเป็นแถวขยะเมื่อสร้างผู้ใช้ล้มเหลว
+if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  console.error(`อีเมลไม่ถูกรูปแบบ: ${email}`);
+  process.exit(1);
+}
 const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
 // ตัวอักษรที่อ่านออกง่าย ไม่มี 0/O/l/1 ที่สับสนตอนพิมพ์มือ

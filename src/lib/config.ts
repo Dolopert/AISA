@@ -26,6 +26,21 @@ export function roundFor(examDate: string) {
   return EXAM_ROUNDS.find((r) => r.date === examDate) ?? null;
 }
 
+/**
+ * โดเมนสำหรับบัญชีที่ไม่มีกล่องเมลจริง (เช่น บัญชีผู้ดูแล)
+ *
+ * Supabase บังคับให้ identifier ต้องเป็นรูปแบบอีเมล พิมพ์ว่า "admin" เฉย ๆ ไม่ผ่าน
+ * หน้าเข้าสู่ระบบจึงเติมโดเมนนี้ให้อัตโนมัติเมื่อผู้ใช้พิมพ์ชื่อสั้น ๆ ที่ไม่มี @
+ * ใช้ .local เพราะไม่มีทางชนกับโดเมนจริงบนอินเทอร์เน็ต
+ */
+export const USERNAME_DOMAIN = "aisa-tracker.local";
+
+/** เติมโดเมนให้ชื่อผู้ใช้ที่ไม่มี @ — "admin" -> "admin@aisa-tracker.local" */
+export function toLoginEmail(input: string): string {
+  const value = input.trim();
+  return value.includes("@") ? value : `${value}@${USERNAME_DOMAIN}`;
+}
+
 /** โครงสร้างข้อสอบจริง */
 export const EXAM = {
   totalQuestions: 180,
