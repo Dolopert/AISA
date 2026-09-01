@@ -18,13 +18,75 @@ export type Settings = {
   target_group1: number;
 };
 
+
+/**
+ * หลักสูตร (subjects / chapters / los) เป็นข้อมูล seed ที่เปลี่ยนปีละครั้ง
+ * แต่เดิมถูกอ่านใหม่จาก DB ทุกครั้งที่เปลี่ยนหน้า — รวมถึง los ทั้ง 515 แถว
+ * จำไว้ในหน่วยความจำของ process ตาม TTL ตัด round-trip ออกจากเส้นทางวิกฤต
+ *
+ * RLS ให้ผู้ใช้ที่ล็อกอินทุกคนเห็นข้อมูลชุดเดียวกัน (using (true)) แชร์แคชได้
+ */
+const CURRICULUM_TTL_MS = 10 * 60_000;
+const memo = new Map<string, { at: number; value: Promise<unknown> }>();
+
+function cachedCurriculum<T>(key: string, load: () => Promise<T>): Promise<T> {
+  const hit = memo.get(key);
+  if (hit && Date.now() - hit.at < CURRICULUM_TTL_MS) return hit.value as Promise<T>;
+
+  const value = load()
+    .then((v) => {
+      // RLS ตอบกลับเป็นว่างเปล่าถ้า request ไม่มี session — อย่าจำผลนั้นไว้ 10 นาที
+      const empty = Array.isArray(v) ? v.length === 0 : v instanceof Map && v.size === 0;
+      if (empty) memo.delete(key);
+      return v;
+    })
+    .catch((err) => {
+      memo.delete(key); // อย่าจำความล้มเหลวไว้ 10 นาที
+      throw err;
+    });
+  memo.set(key, { at: Date.now(), value });
+  return value;
+}
+
 export async function getSubjects(): Promise<Subject[]> {
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("subjects")
-    .select("code, group_no, group_name, name, short_name, weight")
-    .order("sort");
-  return data ?? [];
+  return cachedCurriculum("subjects", async () => {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("subjects")
+      .select("code, group_no, group_name, name, short_name, weight")
+      .order("sort");
+    return data ?? [];
+  });
+}
+
+type ChapterRow = {
+  id: number;
+  subject_code: string;
+  number: number;
+  title: string | null;
+  revised_2569: boolean | null;
+  losCount: number;
+};
+
+/** บททั้งหลักสูตรพร้อมจำนวน LOS ต่อบท */
+async function getChapters(): Promise<ChapterRow[]> {
+  return cachedCurriculum("chapters", async () => {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("chapters")
+      .select("id, subject_code, number, title, revised_2569, los(count)")
+      .order("subject_code")
+      .order("number");
+    return (data ?? []).map((c) => ({
+      id: c.id as number,
+      subject_code: c.subject_code as string,
+      number: c.number as number,
+      title: c.title as string | null,
+      revised_2569: c.revised_2569 as boolean | null,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      losCount: ((c.los as any)?.[0]?.count as number) ?? 0,
+    }));
+  });
 }
 
 export async function getSettings(userId: string): Promise<Settings> {
@@ -168,20 +230,12 @@ export async function getRecentSessions(userId: string, limit = 8): Promise<Rece
 export async function getReadingPlan(userId: string): Promise<SubjectProgress[]> {
   const supabase = await createClient();
 
-  const [{ data: subjects }, { data: chapters }, { data: progress }, { data: spent }] =
-    await Promise.all([
-      supabase
-        .from("subjects")
-        .select("code, name, short_name, group_no, weight")
-        .order("sort"),
-      supabase
-        .from("chapters")
-        .select("id, subject_code, number, title, revised_2569, los(count)")
-        .order("subject_code")
-        .order("number"),
-      supabase.from("reading_progress").select("chapter_id, status").eq("user_id", userId),
-      supabase.from("chapter_minutes_spent").select("chapter_id, minutes, last_studied_on"),
-    ]);
+  const [subjects, chapters, { data: progress }, { data: spent }] = await Promise.all([
+    getSubjects(),
+    getChapters(),
+    supabase.from("reading_progress").select("chapter_id, status").eq("user_id", userId),
+    supabase.from("chapter_minutes_spent").select("chapter_id, minutes, last_studied_on"),
+  ]);
 
   const statusByChapter = new Map(
     (progress ?? []).map((r) => [r.chapter_id as number, r.status as string]),
@@ -193,26 +247,25 @@ export async function getReadingPlan(userId: string): Promise<SubjectProgress[]>
     ]),
   );
 
-  return (subjects ?? []).map((s) => ({
-    code: s.code as string,
-    name: s.name as string,
-    shortName: s.short_name as string,
-    group: s.group_no as number,
+  return subjects.map((s) => ({
+    code: s.code,
+    name: s.name,
+    shortName: s.short_name,
+    group: s.group_no,
     weight: Number(s.weight),
-    chapters: (chapters ?? [])
+    chapters: chapters
       .filter((c) => c.subject_code === s.code)
       .map((c) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const losCount = ((c.los as any)?.[0]?.count as number) ?? 0;
-        const id = c.id as number;
+        const losCount = c.losCount;
+        const id = c.id;
         const used = spentByChapter.get(id);
         return {
           chapterId: id,
-          number: c.number as number,
-          title: (c.title as string) || `บทที่ ${c.number}`,
+          number: c.number,
+          title: c.title || `บทที่ ${c.number}`,
           revised2569: Boolean(c.revised_2569),
           losCount,
-          estimateMinutes: estimateForChapter(s.code as string, losCount),
+          estimateMinutes: estimateForChapter(s.code, losCount),
           spentMinutes: used?.minutes ?? 0,
           status: (statusByChapter.get(id) as "todo" | "reading" | "done") ?? "todo",
           lastStudiedOn: used?.last ?? null,
@@ -223,24 +276,29 @@ export async function getReadingPlan(userId: string): Promise<SubjectProgress[]>
 
 export type LosItem = { number: string; text: string };
 
-/** หัวข้อย่อยของบท ใช้แสดงว่าบทนั้นครอบคลุมอะไรบ้าง */
-export async function getLosForChapters(chapterIds: number[]): Promise<Map<number, LosItem[]>> {
-  const map = new Map<number, LosItem[]>();
-  if (chapterIds.length === 0) return map;
+/**
+ * หัวข้อย่อยของทุกบท ใช้แสดงว่าบทนั้นครอบคลุมอะไรบ้าง
+ *
+ * เดิมส่ง chapterIds เข้าไปกรอง แต่หน้า /read ขอครบทุกบทอยู่แล้ว และ id
+ * ต้องรอ getReadingPlan ก่อน กลายเป็น waterfall — อ่านทั้งก้อนทีเดียวแล้วแคช
+ * ยิงขนานกับ query ของผู้ใช้ได้เลย
+ */
+export async function getAllLos(): Promise<Map<number, LosItem[]>> {
+  return cachedCurriculum("los", async () => {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("los")
+      .select("chapter_id, number, text")
+      .order("number");
 
-  const supabase = await createClient();
-  const { data } = await supabase
-    .from("los")
-    .select("chapter_id, number, text")
-    .in("chapter_id", chapterIds)
-    .order("number");
-
-  for (const row of data ?? []) {
-    const id = row.chapter_id as number;
-    if (!map.has(id)) map.set(id, []);
-    map.get(id)!.push({ number: row.number as string, text: row.text as string });
-  }
-  return map;
+    const map = new Map<number, LosItem[]>();
+    for (const row of data ?? []) {
+      const id = row.chapter_id as number;
+      if (!map.has(id)) map.set(id, []);
+      map.get(id)!.push({ number: row.number as string, text: row.text as string });
+    }
+    return map;
+  });
 }
 
 /** นาทีที่อ่านไปในแต่ละวัน ย้อนหลัง n วัน */

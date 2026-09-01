@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
-import { getReadingPlan, getLosForChapters, getSettings, getDailyReading } from "@/lib/queries";
+import { getUser } from "@/lib/supabase/server";
+import { getReadingPlan, getAllLos, getSettings, getDailyReading } from "@/lib/queries";
 import { summarise, dailyReadingQuota, formatMinutes, paceRatio } from "@/lib/reading";
 import { daysUntil } from "@/lib/readiness";
 import ReadingPlan from "@/components/ReadingPlan";
@@ -8,20 +8,16 @@ import ReadingPlan from "@/components/ReadingPlan";
 export const dynamic = "force-dynamic";
 
 export default async function ReadPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) redirect("/login");
 
-  const [plan, settings, daily] = await Promise.all([
+  const [plan, settings, daily, losMap] = await Promise.all([
     getReadingPlan(user.id),
     getSettings(user.id),
     getDailyReading(7),
+    getAllLos(),
   ]);
 
-  const chapterIds = plan.flatMap((s) => s.chapters.map((c) => c.chapterId));
-  const losMap = await getLosForChapters(chapterIds);
   const losByChapter = Object.fromEntries(losMap);
 
   const summary = summarise(plan);

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { getSettings, getSubjectStats } from "@/lib/queries";
 import { daysUntil, dailyQuota } from "@/lib/readiness";
 import { EXAM_ROUNDS } from "@/lib/config";
@@ -10,9 +10,7 @@ export const dynamic = "force-dynamic";
 
 export default async function SetupPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) redirect("/login");
 
   const [settings, stats] = await Promise.all([getSettings(user.id), getSubjectStats(user.id)]);

@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getUser } from "@/lib/supabase/server";
 import { getSubjects } from "@/lib/queries";
 import StartSession, { type SetOption } from "@/components/StartSession";
 import { OFFICIAL_PRACTICE_EXAMS } from "@/lib/config";
@@ -13,9 +13,7 @@ export default async function PracticePage({
 }) {
   const { subject } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) redirect("/login");
 
   const [subjects, { data: setRows }, { count: bankSize }] = await Promise.all([

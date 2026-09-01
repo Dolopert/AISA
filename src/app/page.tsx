@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 import { getSettings, getSubjectStats, getReadingPlan, getDailyReading } from "@/lib/queries";
 import { computeReadiness, pct, daysUntil } from "@/lib/readiness";
 import { summarise, dailyReadingQuota, formatMinutes } from "@/lib/reading";
@@ -10,10 +10,7 @@ import ReadingCalendar from "@/components/ReadingCalendar";
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) return null;
 
   const [settings, plan, stats, daily] = await Promise.all([

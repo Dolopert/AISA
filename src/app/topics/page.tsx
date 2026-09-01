@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 import { getWeakLos, getSubjectStats } from "@/lib/queries";
 import { prioritise, pct } from "@/lib/readiness";
 import { REVISION_NOTICE } from "@/lib/config";
@@ -8,10 +8,7 @@ import { REVISION_NOTICE } from "@/lib/config";
 export const dynamic = "force-dynamic";
 
 export default async function TopicsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) redirect("/login");
 
   const [weak, stats] = await Promise.all([getWeakLos(user.id, 50), getSubjectStats(user.id)]);

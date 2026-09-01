@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 import BottomNav from "@/components/BottomNav";
 import ThemeToggle, { THEME_INIT_SCRIPT } from "@/components/ThemeToggle";
 
@@ -21,13 +21,11 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // แถบเมนูล่างมีเฉพาะตอนล็อกอินแล้ว ไม่งั้นหน้า login จะมีเมนูที่กดไปไหนไม่ได้
+  // getUser() ถูก cache ต่อ request แล้ว หน้าที่ render พร้อมกันจึงใช้ผลเดียวกัน
+  // ไม่ยิงซ้ำ
   let signedIn = false;
   try {
-    const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    signedIn = Boolean(user);
+    signedIn = Boolean(await getUser());
   } catch {
     signedIn = false;
   }

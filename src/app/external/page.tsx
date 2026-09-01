@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/supabase/server";
 import { getSubjects } from "@/lib/queries";
 import ExternalForm from "@/components/ExternalForm";
 
@@ -11,10 +11,7 @@ export default async function ExternalPage({
   searchParams: Promise<{ subject?: string; count?: string }>;
 }) {
   const { subject, count } = await searchParams;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUser();
   if (!user) redirect("/login");
 
   const subjects = await getSubjects();
