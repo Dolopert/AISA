@@ -4,6 +4,7 @@ import { getSettings, getSubjectStats } from "@/lib/queries";
 import { daysUntil, dailyQuota } from "@/lib/readiness";
 import { EXAM_ROUNDS } from "@/lib/config";
 import SettingsForm from "@/components/SettingsForm";
+import PasswordForm from "@/components/PasswordForm";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,8 @@ export default async function SetupPage() {
         targetGroup1={settings.target_group1}
         rounds={EXAM_ROUNDS.map((r) => ({ label: r.label, date: r.date }))}
       />
+
+      <PasswordForm />
 
       <section className="rounded-xl border border-[var(--color-line)] bg-[var(--color-card)] p-4">
         <h2 className="text-sm font-semibold">โควตารายวัน</h2>
