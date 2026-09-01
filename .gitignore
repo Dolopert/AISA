@@ -13,3 +13,4 @@ __pycache__/
 data/curriculum.json
 
 .next-verify/
+.admin-credentials.local
