@@ -5,13 +5,26 @@
  * การเขียน scraper ไปดูดข้อมูลที่เปลี่ยนปีละ 4 ครั้งแพงกว่าการแก้ไฟล์นี้
  */
 
-/** รอบทดสอบ AISA — อัปเดตมือเมื่อ ตลท. ประกาศรอบใหม่ */
+/**
+ * รอบทดสอบ AISA — อัปเดตมือเมื่อ ตลท. ประกาศรอบใหม่
+ *
+ * วันที่มาจากตารางรอบทดสอบของ ตลท. โดยตรง ไม่ได้ดึงจากเว็บ
+ * เพราะเปลี่ยนปีละไม่กี่ครั้ง การดูแล scraper แพงกว่าการแก้ไฟล์นี้
+ */
 export const EXAM_ROUNDS = [
-  { label: "รอบเดือนพฤศจิกายน 2569", date: "2026-11-14" },
-  { label: "รอบเดือนกุมภาพันธ์ 2570", date: "2027-02-13" },
+  {
+    label: "รอบเดือนพฤศจิกายน 2569",
+    date: "2026-11-22",
+    registerOpen: "2026-09-07",
+    registerClose: "2026-11-08",
+  },
 ] as const;
 
 export const DEFAULT_EXAM_DATE = EXAM_ROUNDS[0].date;
+
+export function roundFor(examDate: string) {
+  return EXAM_ROUNDS.find((r) => r.date === examDate) ?? null;
+}
 
 /** โครงสร้างข้อสอบจริง */
 export const EXAM = {
